@@ -1,3 +1,4 @@
+bs4
 pandas
 numpy
 scipy
@@ -7,5 +8,6 @@ torch
 transformers
 pytorch-lightning
 matplotlib
+missingno
 seaborn
 tqdm
