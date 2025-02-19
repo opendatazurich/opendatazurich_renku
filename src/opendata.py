@@ -175,7 +175,8 @@ class OpenDataZH:
         if data["result"] == []:
             print("0 packages retrieved.")
             return None
-        print(f"{len(data["result"])} packages retrieved.")
+        num_results = len(data["result"])
+        print(f"{num_results} packages retrieved.")
         df = pd.DataFrame(pd.json_normalize(data["result"]))
         return df
 
@@ -238,20 +239,19 @@ class OpenDataPackage:
                 f"<a href='{BASELINK_DATAPORTAL}{self.metadata['name']}'>Direct link by OpenDataZurich for dataset</a>"
             )
         )
-        display(
-            HTML(
-                f"<a href='{self.metadata.resources[0]["url"]}'>{self.metadata.resources[0]["url"]}</a>"
-            )
-        )
+        url = self.metadata.resources[0]["url"]
+        display(HTML(f"<a href='{url}'>{url}</a>"))
 
         display(HTML(f"<h2>Metadata</h2>"))
+        display_name = self.metadata["groups"][0]["display_name"]
+        display_tags = [t["display_name"] for t in self.metadata["tags"]]
         display(
             Markdown(
                 f"* **Publisher** {self.metadata['author']}\n"
                 + f"* **Maintainer** {self.metadata['maintainer']}\n"
                 + f"* **Maintainer email** {self.metadata['maintainer_email']}\n"
-                + f"* **Keywords** {self.metadata["groups"][0]["display_name"]}\n"
-                + f"* **Tags** {[t["display_name"] for t in self.metadata["tags"]]}\n"
+                + f"* **Keywords** {display_name}\n"
+                + f"* **Tags** {display_tags}\n"
                 + f"* **Metadata created** {self.metadata['metadata_created']}\n"
                 + f"* **Metadata modified** {self.metadata['metadata_modified']}\n"
             )
