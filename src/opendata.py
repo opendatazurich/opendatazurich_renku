@@ -83,6 +83,7 @@ REDUCED_FEATURESET = [
     "metadata",
 ]
 
+
 # Utility functions
 def has_csv_distribution(dists):
     """Iterate over package resources and keep only CSV entries in list"""
@@ -98,7 +99,7 @@ def filter_csv(full_df):
     df = full_df.copy()
     df.resources = df.resources.apply(has_csv_distribution)
     df.dropna(subset=["resources"], inplace=True)
-    return df.reset_index(drop=True)
+    return df
 
 
 def get_dataset(url):
@@ -163,7 +164,7 @@ class OpenDataZH:
             offset += limit
             time.sleep(sleep)
         df = pd.concat(frames)
-        df.reset_index(drop=True, inplace=True)
+        df = df.set_index("name", drop=False).sort_index()
         self._full_package_list_df = df
         return df
 
