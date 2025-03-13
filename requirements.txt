@@ -11,3 +11,4 @@ matplotlib
 missingno
 seaborn
 tqdm
+pyarrow
