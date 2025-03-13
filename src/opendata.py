@@ -219,6 +219,8 @@ class OpenDataPackage:
         self.metadata = metadata
         self.distributions = metadata.get("resources", [])
         self.distribution_links = [x.get("url") for x in self.distributions]
+        self._resource_metadata_df = None
+        self._tabular_resource_metadata_df = None
 
     def display_metadata(self):
         display(
@@ -228,13 +230,13 @@ class OpenDataPackage:
             )
         )
 
-        display(HTML(f"<h2>Dataset</h2>" + f"<b>{self.metadata['title']}</b>"))
+        display(HTML("<h2>Dataset</h2>" + f"<b>{self.metadata['title']}</b>"))
 
-        display(HTML(f"<h2>Description</h2>"))
+        display(HTML("<h2>Description</h2>"))
         display(Markdown(self.metadata["notes"]))
         display(Markdown(self.metadata["sszBemerkungen"]))
 
-        display(HTML(f"<h2>Data set links</h2>"))
+        display(HTML("<h2>Data set links</h2>"))
         display(
             HTML(
                 f"<a href='{BASELINK_DATAPORTAL}{self.metadata['name']}'>Direct link by OpenDataZurich for dataset</a>"
@@ -243,7 +245,7 @@ class OpenDataPackage:
         url = self.metadata.resources[0]["url"]
         display(HTML(f"<a href='{url}'>{url}</a>"))
 
-        display(HTML(f"<h2>Metadata</h2>"))
+        display(HTML("<h2>Metadata</h2>"))
         display_name = self.metadata["groups"][0]["display_name"]
         display_tags = [t["display_name"] for t in self.metadata["tags"]]
         display(
@@ -258,15 +260,41 @@ class OpenDataPackage:
             )
         )
 
-    def dataset(self, index=0):
-        return OpenDataDataset(self, index)
+    def display_resource_summary(self):
+        display(
+            HTML(
+                f"<h2>Resources</h2>"
+                + f"<b>{len(self.resource_metadata_df)} resource(s) found in this dataset.</b>"
+            )
+        )
+        summary_ser = self.resource_metadata_df.groupby("format").count()["url"]
+        summary_ser.name = "resources by type"
+        display(HTML(summary_ser.to_frame().to_html()))
+
+    @property
+    def resource_metadata_df(self):
+        if self._resource_metadata_df is None:
+            self._resource_metadata_df = pd.DataFrame(self.metadata["resources"])
+        return self._resource_metadata_df
+
+    @property
+    def tabular_resource_metadata_df(self):
+        if self._tabular_resource_metadata_df is None:
+            self._tabular_resource_metadata_df = self.resource_metadata_df[
+                self.resource_metadata_df["format"].isin(["CSV", "parquet"])
+            ]
+        return self._tabular_resource_metadata_df
+
+    def tabular_resource(self, index=0):
+        metadata = self.tabular_resource_metadata_df.iloc[index]
+        return OpenDataTabularResource(self, index, metadata)
 
 
-class OpenDataDataset:
-    def __init__(self, package, index):
+class OpenDataTabularResource:
+    def __init__(self, package, index, metadata):
         self.package = package
         self.index = index
-        self.metadata = package.metadata["resources"][index]
+        self.metadata = metadata
         self._df = None
 
     def display_metadata(self):
