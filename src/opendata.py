@@ -85,19 +85,23 @@ REDUCED_FEATURESET = [
 
 
 # Utility functions
-def has_csv_distribution(dists):
-    """Iterate over package resources and keep only CSV entries in list"""
-    csv_dists = [x for x in dists if x.get("format", "") == "CSV"]
-    if csv_dists != []:
-        return csv_dists
+def has_tabular_distribution(dists):
+    """Iterate over package resources and keep only tabular entries in list"""
+    tabular_dists = [
+        x
+        for x in dists
+        if x.get("format", "") == "CSV" or x.get("format", "") == "parquet"
+    ]
+    if tabular_dists != []:
+        return tabular_dists
     else:
         return np.nan
 
 
-def filter_csv(full_df):
-    """Filter to datasets that have a CSV distribution"""
+def filter_tabular(full_df):
+    """Filter to datasets that have a tabular data distribution"""
     df = full_df.copy()
-    df.resources = df.resources.apply(has_csv_distribution)
+    df.resources = df.resources.apply(has_tabular_distribution)
     df.dropna(subset=["resources"], inplace=True)
     return df
 
@@ -150,7 +154,7 @@ class OpenDataZH:
         self.reduced_featureset = REDUCED_FEATURESET
 
         self._full_package_list_df = None
-        self._csv_package_list_df = None
+        self._tabular_package_list_df = None
 
     def _get_full_package_list(self, limit=500, sleep=2):
         """Get full package list from CKAN API"""
@@ -188,12 +192,12 @@ class OpenDataZH:
         return self._full_package_list_df
 
     @property
-    def csv_package_list(self):
-        if self._csv_package_list_df is None:
+    def tabular_package_list_df(self):
+        if self._tabular_package_list_df is None:
             if self._full_package_list_df is None:
                 self._get_full_package_list()
-            self._csv_package_list_df = filter_csv(self._full_package_list_df)
-        return self._csv_package_list_df
+            self._tabular_package_list_df = filter_tabular(self._full_package_list_df)
+        return self._tabular_package_list_df
 
     def get_package(self, id=None, name=None):
         """Get a package from CKAN API"""
