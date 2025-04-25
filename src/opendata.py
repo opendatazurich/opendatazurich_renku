@@ -4,17 +4,15 @@ interacting with the Open Data Swiss API.
 
 """
 
-import pandas as pd
-
-import numpy as np
-import requests
+import geopandas as gpd
 import json
+import numpy as np
+import pandas as pd
+from owslib.wfs import WebFeatureService
+import requests
 import re
-from datetime import datetime
 import time
-from tqdm import tqdm
 
-from bs4 import BeautifulSoup as bs4
 
 import warnings
 from IPython.display import display, HTML, Markdown
@@ -85,6 +83,56 @@ REDUCED_FEATURESET = [
 
 
 # Utility functions
+def filter_tabular(full_df):
+    """Filter to datasets that have a tabular data distribution"""
+    df = full_df.copy()
+    df.resources = df.resources.apply(has_tabular_distribution)
+    df.dropna(subset=["resources"], inplace=True)
+    return df
+
+
+def filter_geo(full_df):
+    """Filter to datasets that have a geo data distribution"""
+    df = full_df.copy()
+    df.resources = df.resources.apply(has_geo_distribution)
+    df.dropna(subset=["resources"], inplace=True)
+    return df
+
+
+def get_dataset(url):
+    """
+    Return pandas df if url is parquet or csv file. Return None if not.
+    """
+    extension = url.rsplit(".", 1)[-1]
+    if extension == "parquet":
+        df = pd.read_parquet(url)
+    elif extension == "csv":
+        df = pd.read_csv(
+            url,
+            sep=",",
+            on_bad_lines="warn",
+            encoding_errors="ignore",
+            low_memory=False,
+        )
+        # if dataframe only has one column or less the data is not comma separated, use ";" instead
+        if df.shape[1] <= 1:
+            df = pd.read_csv(
+                url,
+                sep=";",
+                on_bad_lines="warn",
+                encoding_errors="ignore",
+                low_memory=False,
+            )
+            if df.shape[1] <= 1:
+                print(
+                    "The data wasn't imported properly. Very likely the correct separator couldn't be found.\nPlease check the dataset manually and adjust the code."
+                )
+    else:
+        print("Cannot load data! Please provide an url with csv or parquet extension.")
+        df = None
+    return df
+
+
 def has_tabular_distribution(dists):
     """Iterate over package resources and keep only tabular entries in list"""
     tabular_dists = [
@@ -98,46 +146,43 @@ def has_tabular_distribution(dists):
         return np.nan
 
 
-def filter_tabular(full_df):
-    """Filter to datasets that have a tabular data distribution"""
-    df = full_df.copy()
-    df.resources = df.resources.apply(has_tabular_distribution)
-    df.dropna(subset=["resources"], inplace=True)
-    return df
-
-
-def get_dataset(url):
-    """
-    Return pandas df if url is parquet or csv file. Return None if not.
-    """
-    extension = url.rsplit(".", 1)[-1]
-    if extension == "parquet":
-        data = pd.read_parquet(url)
-    elif extension == "csv":
-        data = pd.read_csv(
-            url,
-            sep=",",
-            on_bad_lines="warn",
-            encoding_errors="ignore",
-            low_memory=False,
-        )
-        # if dataframe only has one column or less the data is not comma separated, use ";" instead
-        if data.shape[1] <= 1:
-            data = pd.read_csv(
-                url,
-                sep=";",
-                on_bad_lines="warn",
-                encoding_errors="ignore",
-                low_memory=False,
-            )
-            if data.shape[1] <= 1:
-                print(
-                    "The data wasn't imported properly. Very likely the correct separator couldn't be found.\nPlease check the dataset manually and adjust the code."
-                )
+def has_geo_distribution(dists):
+    """Iterate over package resources and keep only geo entries in list"""
+    geo_dists = [x for x in dists if x.get("format", "") == "WFS"]
+    if geo_dists != []:
+        return geo_dists
     else:
-        print("Cannot load data! Please provide an url with csv or parquet extension.")
-        data = None
-    return data
+        return np.nan
+
+
+def identifier_from_url(url):
+    """
+    Extracts the identifier from the url.
+    """
+    # Extract the identifier from the url
+    identifier = re.search(r"\/([^\/\?]+)\?", url).group(1)
+    return identifier
+
+
+def url_to_geoportal_url(url):
+    """
+    Converts the url to a geoportal url.
+    """
+    # Extract the identifier from the url
+    identifier = identifier_from_url(url)
+    # Create the geoportal url
+    geoportal_url = f"https://www.ogd.stadt-zuerich.ch/wfs/geoportal/{identifier}"
+    return geoportal_url
+
+
+def geojson_layers_from_wfs(wfs):
+    layers = list(wfs.contents.keys())
+    return layers
+
+
+def read_geojson_from_wfs(wfs, layer):
+    response = wfs.getfeature(typename=layer, outputFormat="application/json")
+    return response.read()
 
 
 # API
@@ -154,6 +199,7 @@ class OpenDataZH:
         self.reduced_featureset = REDUCED_FEATURESET
 
         self._full_package_list_df = None
+        self._geo_package_list_df = None
         self._tabular_package_list_df = None
 
     def _get_full_package_list(self, limit=500, sleep=2):
@@ -199,6 +245,14 @@ class OpenDataZH:
             self._tabular_package_list_df = filter_tabular(self._full_package_list_df)
         return self._tabular_package_list_df
 
+    @property
+    def geo_package_list_df(self):
+        if self._geo_package_list_df is None:
+            if self._full_package_list_df is None:
+                self._get_full_package_list()
+            self._geo_package_list_df = filter_geo(self._full_package_list_df)
+        return self._geo_package_list_df
+
     def get_package(self, id=None, name=None):
         """Get a package from CKAN API"""
         if id is None and name is None:
@@ -211,7 +265,7 @@ class OpenDataZH:
         )
         res = requests.get(url)
         data = json.loads(res.content)
-        if data["success"] == False:
+        if not data["success"]:
             print(data.get("error", "No error message provided."))
             return None
         return OpenDataPackage(self, pd.json_normalize(data["result"]).iloc[0])
@@ -225,6 +279,7 @@ class OpenDataPackage:
         self.distribution_links = [x.get("url") for x in self.distributions]
         self._resource_metadata_df = None
         self._tabular_resource_metadata_df = None
+        self._geo_resource_metadata_df = None
 
     def display_metadata(self):
         display(
@@ -267,13 +322,25 @@ class OpenDataPackage:
     def display_resource_summary(self):
         display(
             HTML(
-                f"<h2>Resources</h2>"
+                "<h2>Resources</h2>"
                 + f"<b>{len(self.resource_metadata_df)} resource(s) found in this dataset.</b>"
             )
         )
         summary_ser = self.resource_metadata_df.groupby("format").count()["url"]
         summary_ser.name = "resources by type"
         display(HTML(summary_ser.to_frame().to_html()))
+
+    @property
+    def geo_resource_metadata_df(self):
+        if self._geo_resource_metadata_df is None:
+            self._geo_resource_metadata_df = self.resource_metadata_df[
+                self.resource_metadata_df["format"].isin(["WFS"])
+            ]
+        return self._geo_resource_metadata_df
+
+    def geo_resource(self, index=0):
+        metadata = self.geo_resource_metadata_df.iloc[index]
+        return OpenDataGeoResource(self, index, metadata)
 
     @property
     def resource_metadata_df(self):
@@ -292,6 +359,58 @@ class OpenDataPackage:
     def tabular_resource(self, index=0):
         metadata = self.tabular_resource_metadata_df.iloc[index]
         return OpenDataTabularResource(self, index, metadata)
+
+
+class OpenDataGeoResource:
+    def __init__(self, package, index, metadata):
+        self.package = package
+        self.index = index
+        self.metadata = metadata
+        self._df = None
+        self._layers = None
+        self._wfs = None
+
+    def display_metadata(self):
+        display(
+            Markdown(
+                f"* **name** {self.metadata['name']}\n"
+                f"* **format** {self.metadata['format']}\n"
+                f"* **url** {self.metadata['url']}\n"
+                f"* **id** {self.metadata['id']}\n"
+                f"* **resource_type** {self.metadata['resource_type']}\n"
+                f"* **package_id** {self.metadata['package_id']}\n"
+            )
+        )
+
+    def layer_df(self, layer):
+        """Return a geopandas data frame of the layer."""
+        # Read the geojson from the WFS
+        response = read_geojson_from_wfs(self.wfs, layer)
+        return gpd.read_file(response)
+
+    @property
+    def df(self):
+        """Return a geopandas data frame of first layer."""
+        if self._df is None:
+            layer = self.layers[0]
+            # Read the geojson from the WFS
+            response = read_geojson_from_wfs(self.wfs, layer)
+            self._df = gpd.read_file(response)
+        return self._df
+
+    @property
+    def layers(self):
+        if self._layers is None:
+            self._layers = geojson_layers_from_wfs(self.wfs)
+        return self._layers
+
+    @property
+    def wfs(self):
+        if self._wfs is None:
+            # Remove any query parameters from the url
+            geoportal_url = url_to_geoportal_url(self.metadata["url"])
+            self._wfs = WebFeatureService(geoportal_url, version="1.1.0")
+        return self._wfs
 
 
 class OpenDataTabularResource:
