@@ -169,10 +169,19 @@ def url_to_geoportal_url(url):
     Converts the url to a geoportal url.
     """
     # Extract the identifier from the url
-    identifier = identifier_from_url(url)
-    # Create the geoportal url
-    geoportal_url = f"https://www.ogd.stadt-zuerich.ch/wfs/geoportal/{identifier}"
-    return geoportal_url
+    try:
+        identifier = identifier_from_url(url)
+        # Create the geoportal url
+        geoportal_url = f"https://www.ogd.stadt-zuerich.ch/wfs/geoportal/{identifier}"
+        return geoportal_url
+    except AttributeError:
+        if "/wfs/" in url:
+            # If the url already contains /wfs/ return it
+            return url
+        else:
+            # If the url does not contain /wfs/ return None
+            print("Could not extract identifier from url.")
+            return None
 
 
 def geojson_layers_from_wfs(wfs):
@@ -181,7 +190,9 @@ def geojson_layers_from_wfs(wfs):
 
 
 def read_geojson_from_wfs(wfs, layer):
-    response = wfs.getfeature(typename=layer, outputFormat="application/json")
+    response = wfs.getfeature(
+        typename=layer, outputFormat="application/json; subtype=geojson"
+    )
     return response.read()
 
 
@@ -392,10 +403,7 @@ class OpenDataGeoResource:
     def df(self):
         """Return a geopandas data frame of first layer."""
         if self._df is None:
-            layer = self.layers[0]
-            # Read the geojson from the WFS
-            response = read_geojson_from_wfs(self.wfs, layer)
-            self._df = gpd.read_file(response)
+            self._df = self.layer_df(self.layers[0])
         return self._df
 
     @property
