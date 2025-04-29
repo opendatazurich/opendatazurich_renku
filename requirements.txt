@@ -6,6 +6,7 @@ missingno==0.5.*
 numpy==2.*
 owslib==0.33.*
 pandas==2.*
+papermill==2.*
 plotly==6.*
 pyarrow==19.*
 pytorch-lightning==2.*
