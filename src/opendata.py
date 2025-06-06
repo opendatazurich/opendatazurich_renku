@@ -349,8 +349,14 @@ class OpenDataPackage:
             ]
         return self._geo_resource_metadata_df
 
-    def geo_resource(self, index=0):
-        metadata = self.geo_resource_metadata_df.iloc[index]
+    def geo_resource(self, index=0, id=None):
+        """Find a resource by id, if provided, otherwise by index"""
+        if id is not None:
+            metadata = self.geo_resource_metadata_df[
+                self.geo_resource_metadata_df["id"] == id
+            ].iloc[0]
+        else:
+            metadata = self.geo_resource_metadata_df.iloc[index]
         return OpenDataGeoResource(self, index, metadata)
 
     @property
@@ -367,8 +373,14 @@ class OpenDataPackage:
             ]
         return self._tabular_resource_metadata_df
 
-    def tabular_resource(self, index=0):
-        metadata = self.tabular_resource_metadata_df.iloc[index]
+    def tabular_resource(self, index=0, id=None):
+        """Find a resource by id, if provided, otherwise by index"""
+        if id is not None:
+            metadata = self.tabular_resource_metadata_df[
+                self.tabular_resource_metadata_df["id"] == id
+            ].iloc[0]
+        else:
+            metadata = self.tabular_resource_metadata_df.iloc[index]
         return OpenDataTabularResource(self, index, metadata)
 
 
