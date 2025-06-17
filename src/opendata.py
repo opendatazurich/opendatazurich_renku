@@ -345,7 +345,7 @@ class OpenDataPackage:
     def geo_resource_metadata_df(self):
         if self._geo_resource_metadata_df is None:
             self._geo_resource_metadata_df = self.resource_metadata_df[
-                self.resource_metadata_df["format"].isin(["WFS"])
+                self.resource_metadata_df["format"].isin(["WFS", "JSON"])
             ]
         return self._geo_resource_metadata_df
 
