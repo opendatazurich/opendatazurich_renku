@@ -1,0 +1,8 @@
+# pipenv
+Pipfile
+Pipfile.lock
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+__pycache__/

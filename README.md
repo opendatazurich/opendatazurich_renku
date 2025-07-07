@@ -1,4 +1,4 @@
-# OpenDataZurch data in Renkulab
+# OpenDataZurich data in Renkulab
 
 This repository is an example of how to work with OpenDataZurch data in Renkulab. The Dockerfile defines a session launcher with all the necessary packages installed.
 
