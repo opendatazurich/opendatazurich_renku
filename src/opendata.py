@@ -22,64 +22,10 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 # Defaults
 
 # Set constants for data provider and data API.
-PROVIDER = "opendata.zh"
-PROVIDER_LINK = "https://data.stadt-zuerich.ch"
+PROVIDER = "OpenDataZurich"
 BASELINK_DATAPORTAL = "https://data.stadt-zuerich.ch/dataset/"
 CKAN_API_LINK = "https://data.stadt-zuerich.ch/api/3/action"
-LANGUAGE = "de"
 
-# Sort markdown table by this feature.
-SORT_TABLE_BY = "title"
-
-# Select keys in metadata for dataset and distributions.
-KEYS_DATASET = [
-    "dateLastUpdated",
-    "maintainer",
-    "maintainer_email",
-    "metadata_created",
-    "metadata_modified",
-    "organization.name",
-]
-KEYS_DISTRIBUTIONS = [
-    "package_id",
-    "description",
-    "dateLastUpdated",
-    "license_id",
-]
-
-# Select relevant column names to reduce dataset.
-REDUCED_FEATURESET = [
-    "author",
-    "author_email",
-    "dateLastUpdated",
-    "id",
-    "maintainer",
-    "maintainer_email",
-    "metadata_created",
-    "metadata_modified",
-    "resources",
-    "groups",
-    "name",
-    "language",
-    "modified",
-    "url",
-    "identifier",
-    "display_name.fr",
-    "display_name.de",
-    "display_name.en",
-    "display_name.it",
-    "organization.name",
-    "organization.title.fr",
-    "organization.title.de",
-    "organization.title.en",
-    "organization.title.it",
-    "title",
-    # The following are added for the codebooks.
-    "contact",
-    "distributions",
-    "distribution_links",
-    "metadata",
-]
 
 
 # Utility functions
@@ -200,14 +146,8 @@ def read_geojson_from_wfs(wfs, layer):
 class OpenDataZH:
     def __init__(self):
         self.provider = PROVIDER
-        self.provider_link = PROVIDER_LINK
         self.baselink_dataportal = BASELINK_DATAPORTAL
         self.ckan_api_link = CKAN_API_LINK
-        self.language = LANGUAGE
-        self.sort_table_by = SORT_TABLE_BY
-        self.keys_dataset = KEYS_DATASET
-        self.keys_distributions = KEYS_DISTRIBUTIONS
-        self.reduced_featureset = REDUCED_FEATURESET
 
         self._full_package_list_df = None
         self._geo_package_list_df = None
