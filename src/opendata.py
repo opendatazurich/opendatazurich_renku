@@ -22,7 +22,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 # Defaults
 
 # Set constants for data provider and data API.
-PROVIDER = "opendatazurich"
+PROVIDER = "OpenDataZurich"
 BASELINK_DATAPORTAL = "https://data.stadt-zuerich.ch/dataset/"
 CKAN_API_LINK = "https://data.stadt-zuerich.ch/api/3/action"
 
