@@ -9,3 +9,7 @@ name: "base"
 channels:
   - conda-forge
 prefix: "/opt/conda"
+dependencies:
+  - pip
+  - pip:
+    - -r requirements.txt
