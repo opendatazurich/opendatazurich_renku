@@ -3,10 +3,10 @@
 
 # %%
 import pandas as pd
-from opendata import OpenDataZH
+from opendata import OpenDataZurich
 from IPython.display import display, HTML, Markdown
 
-odz = OpenDataZH()
+odz = OpenDataZurich()
 
 # %%
 package = odz.get_package(name="bau_hae_lima_zuordnung_adr_quartier_bzo16_bzo99_od5143")

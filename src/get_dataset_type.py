@@ -1,11 +1,11 @@
 # %%
 import sys
-from opendata import OpenDataZH
+from opendata import OpenDataZurich
 
 
 def main(dataset_id):
     # Get the dataset
-    odz = OpenDataZH()
+    odz = OpenDataZurich()
     package = odz.get_package(dataset_id)
     if len(package.geo_resource_metadata_df) > 0:
         print("geo")
