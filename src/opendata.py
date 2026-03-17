@@ -143,7 +143,7 @@ def read_geojson_from_wfs(wfs, layer):
 
 
 # API
-class OpenDataZH:
+class OpenDataZurich:
     def __init__(self):
         self.provider = PROVIDER
         self.baselink_dataportal = BASELINK_DATAPORTAL
