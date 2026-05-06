@@ -14,7 +14,7 @@ https://renkulab.io/p/opendatazurich/starter-code
 
 All HTTP requests from this project — the CKAN API calls as well as the WFS and file downloads issued from the notebooks — carry a custom `User-Agent` header, so traffic from this project can be identified in the data portal's access logs. The `USER_AGENT` constant is defined centrally in [src/opendata.py](src/opendata.py); if you fork the repo, please point it at your own repo and bump the version when request behaviour changes.
 
-The format follows RFC 7231 (`Product/Version (+URL)`). How it is applied in the code:
+The format follows RFC 7231 (`Product/Version (comment)`). The `lang=python` tag in the comment distinguishes this repo from the R-based Renku companion repo. How it is applied in the code:
 
 - **CKAN API**: a `requests.Session` with the `User-Agent` header set, used by `OpenDataZurich`.
 - **Tabular downloads** (`pd.read_csv` / `pd.read_parquet`): passed via `storage_options={"User-Agent": ...}`.

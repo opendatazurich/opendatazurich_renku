@@ -27,12 +27,13 @@ BASELINK_DATAPORTAL = "https://data.stadt-zuerich.ch/dataset/"
 CKAN_API_LINK = "https://data.stadt-zuerich.ch/api/3/action"
 
 # Identifies traffic from this project in the OpenDataZurich access logs.
-# Format follows RFC 7231: Product/Version (+URL). Bump the version when
-# request behaviour changes in a way operators of the data portal might care
-# about. Forks: please adjust to point at your own repo.
+# Format follows RFC 7231: Product/Version (comment). The lang=python tag
+# distinguishes this repo from the R-based Renku companion repo. Bump the
+# version when request behaviour changes in a way operators of the data
+# portal might care about. Forks: please adjust to point at your own repo.
 USER_AGENT = (
     "OpenDataZurich-Renku/1.0 "
-    "(+https://github.com/opendatazurich/opendatazurich_renku)"
+    "(lang=python; +https://github.com/opendatazurich/opendatazurich_renku)"
 )
 HEADERS = {"User-Agent": USER_AGENT}
 STORAGE_OPTIONS = {"User-Agent": USER_AGENT}
