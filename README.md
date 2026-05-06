@@ -8,7 +8,17 @@ This repository is an example of how to work with OpenDataZurich data in Renkula
 
 Try it out in Renkulab!
 
-https://renkulab.io/v2/projects/cramakri/opendata-zh
+https://renkulab.io/p/opendatazurich/starter-code
+
+## User-Agent
+
+All HTTP requests from this project — the CKAN API calls as well as the WFS and file downloads issued from the notebooks — carry a custom `User-Agent` header, so traffic from this project can be identified in the data portal's access logs. The `USER_AGENT` constant is defined centrally in [src/opendata.py](src/opendata.py); if you fork the repo, please point it at your own repo and bump the version when request behaviour changes.
+
+The format follows RFC 7231 (`Product/Version (+URL)`). How it is applied in the code:
+
+- **CKAN API**: a `requests.Session` with the `User-Agent` header set, used by `OpenDataZurich`.
+- **Tabular downloads** (`pd.read_csv` / `pd.read_parquet`): passed via `storage_options={"User-Agent": ...}`.
+- **WFS** (`owslib.wfs.WebFeatureService`): passed via `headers={"User-Agent": ...}` — owslib forwards it to both `GetCapabilities` and `GetFeature`.
 
 ## Local development
 
