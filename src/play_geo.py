@@ -8,6 +8,8 @@ import re
 import requests
 import xml.etree.ElementTree as ET
 
+from opendata import HEADERS, USER_AGENT  # noqa: F401
+
 
 # %%
 # Define helper functions
@@ -38,7 +40,7 @@ def geojson_layers_from_wfs(wfs):
 
 def geojson_layers_from_url(geoportal_url):
     params = {"service": "WFS", "version": "1.1.0", "request": "GetCapabilities"}
-    response = requests.get(geoportal_url, params=params)
+    response = requests.get(geoportal_url, params=params, headers=HEADERS)
     root = ET.fromstring(response.content)
     namespace = {"wfs": "http://www.opengis.net/wfs"}
     layers = [
@@ -61,7 +63,7 @@ def read_geojson_from_url(geoportal_url, layer):
         typename=layer,
         outputFormat="application/json",
     )
-    r = requests.get(geoportal_url, params=params)
+    r = requests.get(geoportal_url, params=params, headers=HEADERS)
     return r.json()
 
 
@@ -84,7 +86,7 @@ requests_gdf.head()
 
 # %% [markdown]
 # ## Read in the dataframe using the WFS service
-wfs11 = WebFeatureService(url_geoportal, version="1.1.0")
+wfs11 = WebFeatureService(url_geoportal, version="1.1.0", headers=HEADERS)
 wfs_layers = geojson_layers_from_wfs(wfs11)
 print("Available layers:", wfs_layers)
 print(

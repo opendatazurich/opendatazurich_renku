@@ -26,6 +26,18 @@ PROVIDER = "OpenDataZurich"
 BASELINK_DATAPORTAL = "https://data.stadt-zuerich.ch/dataset/"
 CKAN_API_LINK = "https://data.stadt-zuerich.ch/api/3/action"
 
+# Identifies traffic from this project in the OpenDataZurich access logs.
+# Format follows RFC 7231: Product/Version (comment). The lang=python tag
+# distinguishes this repo from the R-based Renku companion repo. Bump the
+# version when request behaviour changes in a way operators of the data
+# portal might care about. Forks: please adjust to point at your own repo.
+USER_AGENT = (
+    "OpenDataZurich-Renku/1.0 "
+    "(lang=python; +https://github.com/opendatazurich/opendatazurich_renku)"
+)
+HEADERS = {"User-Agent": USER_AGENT}
+STORAGE_OPTIONS = {"User-Agent": USER_AGENT}
+
 
 
 # Utility functions
@@ -51,7 +63,7 @@ def get_dataset(url):
     """
     extension = url.rsplit(".", 1)[-1]
     if extension == "parquet":
-        df = pd.read_parquet(url)
+        df = pd.read_parquet(url, storage_options=STORAGE_OPTIONS)
     elif extension == "csv":
         df = pd.read_csv(
             url,
@@ -59,6 +71,7 @@ def get_dataset(url):
             on_bad_lines="warn",
             encoding_errors="ignore",
             low_memory=False,
+            storage_options=STORAGE_OPTIONS,
         )
         # if dataframe only has one column or less the data is not comma separated, use ";" instead
         if df.shape[1] <= 1:
@@ -68,6 +81,7 @@ def get_dataset(url):
                 on_bad_lines="warn",
                 encoding_errors="ignore",
                 low_memory=False,
+                storage_options=STORAGE_OPTIONS,
             )
             if df.shape[1] <= 1:
                 print(
@@ -149,6 +163,9 @@ class OpenDataZurich:
         self.baselink_dataportal = BASELINK_DATAPORTAL
         self.ckan_api_link = CKAN_API_LINK
 
+        self._session = requests.Session()
+        self._session.headers.update(HEADERS)
+
         self._full_package_list_df = None
         self._geo_package_list_df = None
         self._tabular_package_list_df = None
@@ -172,7 +189,7 @@ class OpenDataZurich:
     def _get_package_list_page(self, limit=500, offset=0):
         """Get a page of packages from CKAN API"""
         url = f"{self.ckan_api_link}/current_package_list_with_resources?limit={limit}&offset={offset}"
-        res = requests.get(url)
+        res = self._session.get(url)
         data = json.loads(res.content)
         if data["result"] == []:
             print("0 packages retrieved.")
@@ -214,7 +231,7 @@ class OpenDataZurich:
             if id is not None
             else f"{self.ckan_api_link}/package_show?id={name}"
         )
-        res = requests.get(url)
+        res = self._session.get(url)
         data = json.loads(res.content)
         if not data["success"]:
             print(data.get("error", "No error message provided."))
@@ -369,7 +386,9 @@ class OpenDataGeoResource:
         if self._wfs is None:
             # Remove any query parameters from the url
             geoportal_url = url_to_geoportal_url(self.metadata["url"])
-            self._wfs = WebFeatureService(geoportal_url, version="1.1.0")
+            self._wfs = WebFeatureService(
+                geoportal_url, version="1.1.0", headers=HEADERS
+            )
         return self._wfs
 
 
