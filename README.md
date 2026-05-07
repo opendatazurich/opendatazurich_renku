@@ -58,7 +58,7 @@ docker run -it --rm \
   -e NB_UID=1000 \
   -e NB_GID=1000 \
   -e PACKAGE_ID="geo_oeffentlich_zugaengliche_parkplaetze_dav" \
-  -e RESOURCE_ID="2ed0038f-974c-4cb8-b7fd-3cf5217e9d6d" \
+  -e RESOURCE_ID="9d4f3dfc-e998-4c23-ba4e-6dde97a4ee16" \
   ghcr.io/opendatazurich/opendatazurich_renku:sha-e21081d \
   /bin/bash -c "cd /home/jovyan/work && bash post-init.sh && \
   jupyter server --ServerApp.ip=0.0.0.0 --ServerApp.port=8888 --ServerApp.base_url=$RENKU_BASE_URL_PATH --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_remote_access=true --ContentsManager.allow_hidden=true --ServerApp.allow_origin='*'"
