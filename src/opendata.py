@@ -403,7 +403,6 @@ class OpenDataTabularResource:
         display(
             Markdown(
                 f"* **name** {self.metadata['name']}\n"
-                f"* **filename** {self.metadata['filename']}\n"
                 f"* **format** {self.metadata['format']}\n"
                 f"* **url** {self.metadata['url']}\n"
                 f"* **id** {self.metadata['id']}\n"
