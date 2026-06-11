@@ -6,8 +6,7 @@ cd $SCRIPT_DIR
 
 if [ -z "${PACKAGE_ID}" ]; then
     echo "PACKAGE_ID is not set. Using the default dataset."
-    papermill templates/TemplateCsv.ipynb OpenData.ipynb
-    exit 0
+    PACKAGE_ID="bau_hae_lima_zuordnung_adr_quartier_bzo16_bzo99_od5143"
 fi
 
 if [ -z "${RESOURCE_ID}" ]; then
@@ -16,15 +15,18 @@ if [ -z "${RESOURCE_ID}" ]; then
 fi
 
 dataset_type=$(python src/get_dataset_type.py "${PACKAGE_ID}")
-if [ "${dataset_type}" = "csv" ]; then
-    echo "Using CSV dataset."
-    papermill templates/TemplateCsv.ipynb OpenData.ipynb -p package_id "${PACKAGE_ID}" -p resource_id "${RESOURCE_ID}"
-elif [ "${dataset_type}" = "geo" ]; then
+if [ "${dataset_type}" = "geo" ]; then
     echo "Using Geo dataset."
-    papermill templates/TemplateGeo.ipynb OpenData.ipynb -p package_id "${PACKAGE_ID}" -p resource_id "${RESOURCE_ID}"
+    template="templates/TemplateGeo.ipynb"
 else
-    echo "Unknown dataset type: ${dataset_type}. Defaulting to CSV."
-    papermill templates/TemplateCsv.ipynb OpenData.ipynb -p package_id "${PACKAGE_ID}"  -p resource_id "${RESOURCE_ID}"
+    if [ "${dataset_type}" = "csv" ]; then
+        echo "Using CSV dataset."
+    else
+        echo "Unknown dataset type: ${dataset_type}. Defaulting to CSV."
+    fi
+    template="templates/TemplateCsv.ipynb"
 fi
+
+python src/run_template.py "${template}" OpenData.ipynb "${PACKAGE_ID}" "${RESOURCE_ID}"
 
 popd > /dev/null
