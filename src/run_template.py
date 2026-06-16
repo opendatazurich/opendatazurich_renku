@@ -22,6 +22,7 @@ STOP_TAG = "stop-execution"
 def main(template_path: str, output_path: str, package_id: str, resource_id: str) -> None:
     template = Path(template_path)
     output = Path(output_path)
+    print(f"Running papermill until stop-execution tag with {template} and parameters {package_id} and {resource_id}")
 
     nb = nbformat.read(template, as_version=4)
 
