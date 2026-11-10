@@ -261,7 +261,9 @@ class OpenDataPackage:
 
         display(HTML("<h2>Description</h2>"))
         display(Markdown(self.metadata["notes"]))
-        display(Markdown(self.metadata["sszBemerkungen"]))
+        bemerkungen = self.metadata.get("sszBemerkungen", "")
+        if not pd.isna(bemerkungen) and bemerkungen:
+            display(Markdown(bemerkungen))
 
         display(HTML("<h2>Data set links</h2>"))
         display(
